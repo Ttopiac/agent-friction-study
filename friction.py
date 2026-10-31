@@ -12,7 +12,7 @@ class Message:
     words: int = 0
     domain: str = ""
     group: str = ""
-    step: int = -1
+    step: int = -1  # which DomainRule step set the domain (0-9, see DomainRule); -1 = not set yet
     matched: str = ""
     all_domains: str = ""
     output_type: str = ""
@@ -62,7 +62,7 @@ class RuleMatcher:
         self.config = config
         self.rules = [(label, re.compile(r"(?<![\w-])(" + w + r")(?![\w-])", re.I)) for label, w in config.rules[self.KEY]]
 
-    def matches(self, text):  # all (step, label, matched word), in rule order
+    def matches(self, text):  # all (list number 1..n, label, matched word), in rule order
         return [(i, label, r.group(1)) for i, (label, p) in enumerate(self.rules, 1) if (r := p.search(text))]
 
     def inherit(self, msgs, field, default):
@@ -76,7 +76,9 @@ class RuleMatcher:
 
 
 class DomainRule(RuleMatcher):
-    """Step 0 = excluded; steps 1-7 = word lists; step 8 = previous message; step 9 = Unclassified."""
+    """Sets the domain of each message. Steps are checked in order; the first step that applies sets m.step.
+    0 = excluded (summary, paste, ...); 1-7 = word list number in rules.json "domain";
+    8 = no word matched, so the domain is copied from the previous message (<= gap); 9 = Unclassified."""
     KEY = "domain"
     def exclude_reason(self, m):  # step 0
         t, ex = m.text, self.config.rules["exclude"]

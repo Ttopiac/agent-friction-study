@@ -1,22 +1,38 @@
 {
-  "_note": "Public rules. Word lists are regex alternatives, matched as whole words, case-insensitive. Order matters: the first match wins.",
-  "exclude": {"paste_words": 120, "greeting": "Hello|Hi|Dear|Hey", "gap_minutes": 60},
-  "domain": [
-    ["Admin forms (A)",   "register|enroll|course credit|internship course|professional course|dissertation|advisor"],
-    ["Documents & email", "resume|resume_all|stories|cover letter|job description|JD|apply for|job application|recruiter|interview"],
-    ["Slide deck",        "slides?|talk|presentation|pages? \\d+|citations?|pptx"],
-    ["Web page",          "intro|introduction|page|website"],
-    ["Admin forms (B)",   "background check|drug|screening|onboarding|I-9|W-4|HR|direct deposit"],
-    ["Research & code",   "spatial|DLPFC|GCN|benchmark|experiment|nicheformer|scGPT|re-run|run the experiment"],
-    ["Tools & setup",     "install|claude|git|github|commit|push|repo|chrome|disappear|scroll|memory"]
-  ],
-  "groups": {"Project X": ["Admin forms (B)", "Web page", "Slide deck"]},
-  "output_type": [
-    ["Visual", "html|pptx|pdf|png|jpg|gif|slides?|pages? \\d+|figures?|images?|font|colou?r|layout"],
-    ["Text",   "txt|py|md|csv|tex|R|json|email|message|resume|cover letter"]
-  ],
-  "tone": [
-    ["Dissatisfied", "bad|wrong|unclear|broken|unprofessional|not (good|professional|clear)|not as good|not a good|way too|too (small|big|long|short|light|general|many)|disappear\\w*|(didn'?t|did not) (see|change|show|update)|you (didn'?t|did not)|still (different|broken|not)|does not look|doesn'?t look|not the same|looks the same|don'?t like|do not like|what happened|hate|drives? nuts?|oh my god|piss\\w*|already said|why (my|all|did|do you)"],
-    ["Satisfied", "great|good job|nice|thanks?|thank you|cool|excellent|very good|much better|looks better|love"]
-  ]
+  "_note": "Public rules. Each word is a regex, matched as a whole word, ignoring case. In 'lists', order matters: the first list with a match wins.",
+  "unit": {
+    "paste_words": 120,
+    "greeting": ["Hello", "Hi", "Dear", "Hey"]
+  },
+  "session": {
+    "gap_minutes": 60,
+    "min_messages": 3
+  },
+  "domain": {
+    "groups": {
+      "Project X": ["Admin forms (B)", "Web page", "Slide deck"]
+    },
+    "lists": [
+      ["Admin forms (A)", ["register", "enroll", "course credit", "internship course", "professional course", "dissertation", "advisor"]],
+      ["Documents & email", ["resume", "resume_all", "stories", "cover letter", "job description", "JD", "apply for", "job application", "recruiter", "interview"]],
+      ["Slide deck", ["slides?", "talk", "presentation", "pages? \\d+", "citations?", "pptx"]],
+      ["Web page", ["intro", "introduction", "page", "website"]],
+      ["Admin forms (B)", ["background check", "drug", "screening", "onboarding", "I-9", "W-4", "HR", "direct deposit"]],
+      ["Research & code", ["spatial", "DLPFC", "GCN", "benchmark", "experiment", "nicheformer", "scGPT", "re-run", "run the experiment"]],
+      ["Tools & setup", ["install", "claude", "git", "github", "commit", "push", "repo", "chrome", "disappear", "scroll", "memory"]]
+    ]
+  },
+  "output_type": {
+    "lists": [
+      ["Visual", ["html", "pptx", "pdf", "png", "jpg", "gif", "slides?", "pages? \\d+", "figures?", "images?", "font", "colou?r", "layout"]],
+      ["Text", ["txt", "py", "md", "csv", "tex", "R", "json", "email", "message", "resume", "cover letter"]]
+    ]
+  },
+  "tone": {
+    "dissatisfied": ["Dissatisfied", "Mixed"],
+    "lists": [
+      ["Dissatisfied", ["bad", "wrong", "unclear", "broken", "unprofessional", "not (good|professional|clear)", "not as good", "not a good", "way too", "too (small|big|long|short|light|general|many)", "disappear\\w*", "(didn'?t|did not) (see|change|show|update)", "you (didn'?t|did not)", "still (different|broken|not)", "does not look", "doesn'?t look", "not the same", "looks the same", "don'?t like", "do not like", "what happened", "hate", "drives? nuts?", "oh my god", "piss\\w*", "already said", "why (my|all|did|do you)"]],
+      ["Satisfied", ["great", "good job", "nice", "thanks?", "thank you", "cool", "excellent", "very good", "much better", "looks better", "love"]]
+    ]
+  }
 }

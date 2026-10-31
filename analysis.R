@@ -3,24 +3,20 @@
 # Reporting follows APA style (7th ed.): tables use n, M, SD; each test gets one APA sentence
 # with the test value, df, p, and an effect size (e.g. t(15.2) = 0.92, p = .371, d = 0.41).
 source("R/helpers.R")
-
-DISSATISFIED <- c("Dissatisfied", "Mixed")  # tones that show the user is dissatisfied
-MIN_MESSAGES <- 3                           # sessions with fewer messages are dropped (their % is too noisy)
-GAP_MINUTES  <- 60                          # a gap longer than this starts a new session
+# All settings (dissatisfied tones, session gap, minimum session size) live in config/rules.json.
+# friction.py applies them and writes the columns dissatisfied, session_no, and session_kept.
+# See results/0_definitions.md for the human-readable version.
 
 # ---- Messages: one row per included message ----
 messages <- read.csv("data/messages.csv", stringsAsFactors = FALSE)
 messages <- messages[messages$step != 0, ]  # step 0 = excluded
-messages$time <- as.POSIXct(messages$local_time, tz = "UTC")
-messages <- messages[order(messages$time), ]
-messages$dissatisfied <- messages$tone %in% DISSATISFIED
+messages$dissatisfied <- as.logical(messages$dissatisfied)  # Python writes "True"/"False"
+messages$session_kept <- as.logical(messages$session_kept)
 messages$visual <- messages$output_type == "Visual"
-new_session <- c(TRUE, diff(as.numeric(messages$time)) > GAP_MINUTES * 60)
-messages$session <- cumsum(new_session)
 
-# ---- Sessions: one row per session with >= MIN_MESSAGES messages ----
-sessions <- aggregate(cbind(count = 1, dissatisfied, visual) ~ session, data = messages, FUN = sum)
-sessions <- sessions[sessions$count >= MIN_MESSAGES, ]
+# ---- Sessions: one row per kept session ----
+kept <- messages[messages$session_kept, ]
+sessions <- aggregate(cbind(count = 1, dissatisfied, visual) ~ session_no, data = kept, FUN = sum)
 sessions$pct_dissatisfied <- 100 * sessions$dissatisfied / sessions$count
 sessions$visual_share <- 100 * sessions$visual / sessions$count
 sessions$session_type <- ifelse(sessions$visual_share >= 50, "Visual", "Text")  # Visual = at least half Visual messages

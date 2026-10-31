@@ -7,10 +7,10 @@ This test finds if friction increases as a session continues. Language models ca
 | Variable | Role | Definition |
 |---|---|---|
 | Dissatisfied reply | Dependent variable | 100 if the next user message in the same session is Dissatisfied or Mixed. 0 if not. The mean is the % of prompts with a dissatisfied reply. |
-| Position | Independent variable | Early: the first half of the prompts in a session. Late: the second half. |
+| Session stage | Independent variable | Early: the first half of the prompts in a session. Late: the second half. |
 
 ## Table 1. Descriptive statistics
-| Position | *n* | *M* | *SD* |
+| Session stage | *n* | *M* | *SD* |
 |---|---|---|---|
 | Early | 135 | 3.7 | 19.0 |
 | Late | 149 | 14.1 | 34.9 |

@@ -24,11 +24,19 @@ DV <- c("Dissatisfied reply", "Dependent variable",
         "100 if the next user message in the same session is Dissatisfied or Mixed. 0 if not. The mean is the % of prompts with a dissatisfied reply.")
 IV_TYPE <- c("Output type", "Independent variable",
              "Visual: the prompt is about visual output (HTML, PPTX, PDF, slides, figures, layout). Text: all other prompts.")
-IV_POSITION <- c("Position", "Independent variable", "Early: the first half of the prompts in a session. Late: the second half.")
+IV_STAGE <- c("Session stage", "Independent variable", "Early: the first half of the prompts in a session. Late: the second half.")
 CAVEAT <- c("Prompts in the same session are not independent.",
             "The dependent variable has only two values (0 and 100). Thus, the test gives an approximate result.")
 LABAN <- "Laban, P., et al. (2025). LLMs get lost in multi-turn conversation. arXiv:2505.06120."
 Y_LABEL <- "% prompts followed by a dissatisfied reply"
+
+# Figure title (the finding) and subtitle (the statistics) for a compare_two() t-test
+figure_finding <- function(cmp, if_real, if_chance) if (cmp$test$p.value < 0.05) if_real else if_chance
+highlight_if_real <- function(cmp, group) if (cmp$test$p.value < 0.05) group else ""  # red only for a real effect
+stats_line <- function(cmp) {
+  c(sprintf("t(%.1f) = %.2f, p %s, d = %.2f.", cmp$test$parameter, abs(cmp$test$statistic), apa_p(cmp$test$p.value), cmp$d),
+    "Bars = 95% CI.")
+}
 
 # Results file for a compare_two() t-test (Welch's t-test: no equal-variance assumption)
 write_ttest_report <- function(cmp, file, title, purpose, iv, group_label, label_a, label_b, if_real, if_chance,
@@ -71,7 +79,11 @@ write_report("results/1_descriptive.md", "Descriptive statistics: dissatisfied m
   "Limitation" = bullets("This analysis is a description. It does not include a statistical test.",
                    sprintf("The domains have different sizes (%d to %d messages). The %% for a small domain is not stable.",
                            min(rates$count), max(rates$count)))))
-plot_rates(rates, "figures/1_descriptive.png", "% dissatisfied messages", highlight = c("Slide deck", "Web page"))
+plot_rates(rates, "figures/1_descriptive.png",
+           title = sprintf("%s and %s have %.0f%% of all dissatisfied messages", top_two[1], top_two[2], top_share),
+           subtitle = c("% of messages in each domain that were dissatisfied.",
+                        sprintf("Overall: %d of %d messages were dissatisfied.", total, nrow(messages))),
+           x_label = "% dissatisfied messages", highlight = c("Slide deck", "Web page"))
 
 # ---- 2a. t-test: short vs long prompts ----
 median_words <- median(prompts$words)
@@ -84,7 +96,7 @@ write_ttest_report(cmp, "results/2a_ttest_length.md", "t-test: short and long pr
   group_label = "Prompt length", label_a = "Long prompts", label_b = "Short prompts",
   if_real = "Prompt length has an effect on the agent's results.",
   if_chance = "Prompt length has no effect on the agent's results. Other factors cause the friction.")
-plot_means_ci(cmp$stats, "figures/2a_ttest_length.png", Y_LABEL, c("grey70", "firebrick"))
+plot_means_ci(cmp$stats, "figures/2a_ttest_length.png", figure_finding(cmp, "Prompt length makes a difference", "Prompt length makes no difference"), stats_line(cmp), Y_LABEL, highlight_if_real(cmp, "Long"))
 
 # ---- 2b. t-test: visual vs text prompts ----
 typed <- prompts[prompts$output_type != "", ]  # pastes have no output type
@@ -95,23 +107,23 @@ write_ttest_report(cmp, "results/2b_ttest_visual.md", "t-test: visual and text p
   if_real = "Visual prompts get more dissatisfied replies than text prompts.",
   if_chance = "Output type has no effect on the agent's results.",
   limitation = c(sprintf("%d pastes have no output type. The test does not include them.", nrow(prompts) - nrow(typed)), CAVEAT))
-plot_means_ci(cmp$stats, "figures/2b_ttest_visual.png", Y_LABEL, c("grey70", "firebrick"))
+plot_means_ci(cmp$stats, "figures/2b_ttest_visual.png", figure_finding(cmp, "Visual prompts get more dissatisfied replies", "Output type makes no difference"), stats_line(cmp), Y_LABEL, highlight_if_real(cmp, "Visual"))
 
 # ---- 2c. t-test: early vs late prompts in a session ----
 in_session <- prompts[as.logical(prompts$session_kept), ]  # sessions with >= min_messages messages; pastes have no session
-position <- ave(seq_len(nrow(in_session)), in_session$session_no, FUN = function(i) seq_along(i) / length(i))
-in_session$half <- ifelse(position <= 0.5, "Early", "Late")  # first half vs second half of each session's prompts
+stage <- ave(seq_len(nrow(in_session)), in_session$session_no, FUN = function(i) seq_along(i) / length(i))
+in_session$half <- ifelse(stage <= 0.5, "Early", "Late")  # first half vs second half of each session's prompts
 cmp <- compare_two(in_session$bad_reply, in_session$half, "Late", "Early")
-write_ttest_report(cmp, "results/2c_ttest_position.md", "t-test: early and late prompts in a session",
+write_ttest_report(cmp, "results/2c_ttest_stage.md", "t-test: early and late prompts in a session",
   purpose = "This test finds if friction increases as a session continues. Language models can lose track in long conversations (Laban et al., 2025).",
-  iv = IV_POSITION, group_label = "Position", label_a = "Late prompts", label_b = "Early prompts",
+  iv = IV_STAGE, group_label = "Session stage", label_a = "Late prompts", label_b = "Early prompts",
   if_real = "Friction increases as a session continues.",
   if_chance = "Friction does not increase as a session continues.",
   limitation = c("The relation can go in the other direction. A session can become long because the agent failed early.", CAVEAT),
   references = c(COHEN, "", LABAN))
-plot_means_ci(cmp$stats, "figures/2c_ttest_position.png", Y_LABEL, c("grey70", "firebrick"))
+plot_means_ci(cmp$stats, "figures/2c_ttest_stage.png", figure_finding(cmp, "Friction increases late in a session", "Session stage makes no difference"), stats_line(cmp), Y_LABEL, highlight_if_real(cmp, "Late"))
 
-# ---- 3. Two-way ANOVA: output type x position in session ----
+# ---- 3. Two-way ANOVA: output type x session stage ----
 y   <- in_session$bad_reply
 typ <- in_session$output_type  # Text / Visual
 pos <- in_session$half         # Early / Late
@@ -120,34 +132,40 @@ cells <- describe_by_group(y, paste(typ, pos, sep = ", "))
 cell  <- tapply(y, list(typ, pos), mean)
 zero_sd <- rownames(cells)[cells$sd == 0]
 conclusion <- if (effects["a:b", "p"] < 0.05) {
-  c("The effect of position changes with the output type.",
+  c("The effect of session stage changes with the output type.",
     sprintf("From early to late, the rate increases by %.1f points for visual prompts and by %.1f points for text prompts.",
             cell["Visual", "Late"] - cell["Visual", "Early"], cell["Text", "Late"] - cell["Text", "Early"]))
 } else if (effects["a", "p"] < 0.05 && effects["b", "p"] < 0.05) {
-  c("Output type and position are two separate factors in friction. Their effects add.",
+  c("Output type and session stage are two separate factors in friction. Their effects add.",
     sprintf("The highest rate is for visual prompts late in a session (%.1f%%).", cell["Visual", "Late"]),
     sprintf("The lowest rate is for text prompts early in a session (%.1f%%).", cell["Text", "Early"]))
 } else {
-  sprintf("Output type %s. Position %s.", if (effects["a", "p"] < 0.05) "has an effect" else "has no effect",
+  sprintf("Output type %s. Session stage %s.", if (effects["a", "p"] < 0.05) "has an effect" else "has no effect",
           if (effects["b", "p"] < 0.05) "has an effect" else "has no effect")
 }
 sig <- function(row) if (effects[row, "p"] < 0.05) "significant" else "not significant"
-write_report("results/3_anova.md", "Two-way ANOVA: output type and position in a session", list(
+write_report("results/3_anova.md", "Two-way ANOVA: output type and session stage", list(
   "Purpose" = c("Tests 2b and 2c found more friction for visual prompts and for late prompts.",
-                "This ANOVA tests each effect with the other effect held constant. It also tests if the effect of position changes with the output type (the interaction)."),
-  "Variables" = variables_table(DV, IV_TYPE, IV_POSITION),
-  "Table 1. Descriptive statistics" = md_table(c("Output type, Position", "*n*", "*M*", "*SD*"),
+                "This ANOVA tests each effect with the other effect held constant. It also tests if the effect of session stage changes with the output type (the interaction)."),
+  "Variables" = variables_table(DV, IV_TYPE, IV_STAGE),
+  "Table 1. Descriptive statistics" = md_table(c("Output type, Session stage", "*n*", "*M*", "*SD*"),
     lapply(rownames(cells), function(g) c(g, cells[g, "count"], sprintf("%.1f", cells[g, "mean"]), sprintf("%.1f", cells[g, "sd"])))),
-  "Table 2. Two-way ANOVA" = c(anova_table(effects, c("Output type", "Position", "Output type × Position", "Residual")), "",
+  "Table 2. Two-way ANOVA" = c(anova_table(effects, c("Output type", "Session stage", "Output type × Session stage", "Residual")), "",
                                "*Note.* Type II sums of squares. η²p = partial eta-squared."),
-  "Results" = sprintf("The main effect of output type was %s. The main effect of position was %s. The interaction was %s (Table 2).",
+  "Results" = sprintf("The main effect of output type was %s. The main effect of session stage was %s. The interaction was %s (Table 2).",
                       sig("a"), sig("b"), sig("a:b")),
   "Interpretation" = c(read_effect("Output type", effects["a", "p"], eta_text(effects["a", "partial_eta_sq"])),
-                       read_effect("Position", effects["b", "p"], eta_text(effects["b", "partial_eta_sq"])),
+                       read_effect("Session stage", effects["b", "p"], eta_text(effects["b", "partial_eta_sq"])),
                        read_effect("Interaction", effects["a:b", "p"], eta_text(effects["a:b", "partial_eta_sq"])),
                        "", paste(conclusion, collapse = " "), "", SCALE_NOTE),
   "Limitation" = bullets(sprintf("The groups are small (%d to %d prompts).", min(cells$count), max(cells$count)),
                          if (length(zero_sd) > 0) sprintf("The group %s has no dissatisfied replies (*SD* = 0). Thus, the groups do not have equal variance.", zero_sd),
                          CAVEAT),
   "References" = COHEN))
-plot_interaction(y, typ, pos, "figures/3_anova.png", Y_LABEL, c("grey50", "firebrick"))
+plot_interaction(y, typ, pos, "figures/3_anova.png",
+                 title = if (effects["a", "p"] < 0.05 && effects["b", "p"] < 0.05 && effects["a:b", "p"] >= 0.05)
+                   "Visual output and a late session stage add up" else "Output type and session stage",
+                 subtitle = c(sprintf("Output type: p %s. Session stage: p %s. Interaction: p %s.",
+                                      apa_p(effects["a", "p"]), apa_p(effects["b", "p"]), apa_p(effects["a:b", "p"])),
+                              "Parallel lines = no interaction. Bars = 95% CI."),
+                 x_label = "Session stage", y_label = Y_LABEL, highlight = "Visual")

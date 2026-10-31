@@ -115,7 +115,7 @@ class OutputTypeRule(RuleMatcher):
 
 
 class ToneRule(RuleMatcher):
-    """Mixed if Negative and Positive both match; else the matching list; else Neutral. Interruptions = Interrupted."""
+    """Mixed if Dissatisfied and Satisfied both match; else the matching list; else Neutral. Interruptions = Interrupted."""
     KEY = "tone"
     def apply(self, msgs):
         for m in msgs:

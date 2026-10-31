@@ -16,7 +16,7 @@
     ["Text",   "txt|py|md|csv|tex|R|json|email|message|resume|cover letter"]
   ],
   "tone": [
-    ["Negative", "bad|wrong|unclear|broken|unprofessional|not (good|professional|clear)|not as good|not a good|way too|too (small|big|long|short|light|general|many)|disappear\\w*|(didn'?t|did not) (see|change|show|update)|you (didn'?t|did not)|still (different|broken|not)|does not look|doesn'?t look|not the same|looks the same|don'?t like|do not like|what happened|hate|drives? nuts?|oh my god|piss\\w*|already said|why (my|all|did|do you)"],
-    ["Positive", "great|good job|nice|thanks?|thank you|cool|excellent|very good|much better|looks better|love"]
+    ["Dissatisfied", "bad|wrong|unclear|broken|unprofessional|not (good|professional|clear)|not as good|not a good|way too|too (small|big|long|short|light|general|many)|disappear\\w*|(didn'?t|did not) (see|change|show|update)|you (didn'?t|did not)|still (different|broken|not)|does not look|doesn'?t look|not the same|looks the same|don'?t like|do not like|what happened|hate|drives? nuts?|oh my god|piss\\w*|already said|why (my|all|did|do you)"],
+    ["Satisfied", "great|good job|nice|thanks?|thank you|cool|excellent|very good|much better|looks better|love"]
   ]
 }

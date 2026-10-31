@@ -48,3 +48,22 @@ plot_means_ci <- function(stats, file, y_label, colors) {
          angle = 90, code = 3, length = 0.08)
   invisible(dev.off())
 }
+
+# For each group: number of items, number flagged TRUE, and % flagged (highest % first)
+rate_by_group <- function(flags, groups) {
+  count   <- tapply(flags, groups, length)
+  flagged <- tapply(flags, groups, sum)
+  rates <- data.frame(count = as.vector(count), flagged = as.vector(flagged),
+                      pct = as.vector(100 * flagged / count), row.names = names(count))
+  rates[order(-rates$pct), ]
+}
+
+# Horizontal bar chart of % per group; groups in `highlight` are red
+plot_rates <- function(rates, file, x_label, highlight) {
+  png(file, 1000, 650, res = 130)
+  par(mar = c(5, 11, 2, 1))
+  ordered <- rates[order(rates$pct), ]
+  colors  <- ifelse(rownames(ordered) %in% highlight, "firebrick", "grey70")
+  barplot(ordered$pct, names.arg = rownames(ordered), horiz = TRUE, las = 1, col = colors, xlab = x_label)
+  invisible(dev.off())
+}

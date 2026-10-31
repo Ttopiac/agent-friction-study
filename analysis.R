@@ -48,3 +48,20 @@ sentence <- sprintf(
 writeLines(c("# t-test: % dissatisfied messages per session", "", apa_table(stats, "Session type"), "", sentence),
            "results/1_ttest.md")
 plot_means_ci(stats, "figures/1_ttest.png", "% dissatisfied messages per session", c("grey70", "firebrick"))
+
+# ---- 2. Descriptive: % dissatisfied messages by domain ----
+rates <- rate_by_group(messages$dissatisfied, messages$domain)
+total <- sum(messages$dissatisfied)
+others_max <- max(rates$pct[-(1:2)])
+sentence <- sprintf(
+  "Of %d messages, %d (%.1f%%) were dissatisfied. The rate was highest for %s (%.1f%%) and %s (%.1f%%), and at most %.1f%% in every other domain.",
+  nrow(messages), total, 100 * total / nrow(messages),
+  rownames(rates)[1], rates$pct[1], rownames(rates)[2], rates$pct[2], others_max
+)
+table <- c(
+  "| Domain | n | Dissatisfied | % |",
+  "|---|---|---|---|",
+  sprintf("| %s | %d | %d | %.1f |", rownames(rates), rates$count, rates$flagged, rates$pct)
+)
+writeLines(c("# Descriptive: dissatisfied messages by domain", "", table, "", sentence), "results/2_descriptive.md")
+plot_rates(rates, "figures/2_descriptive.png", "% dissatisfied messages", highlight = c("Slide deck", "Web page"))

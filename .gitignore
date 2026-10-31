@@ -1,0 +1,9 @@
+# Private: never commit
+data/
+config/local.json
+
+# Build files
+__pycache__/
+.DS_Store
+.Rhistory
+.RData

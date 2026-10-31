@@ -28,7 +28,8 @@ class Config:
     """Public rules.json, plus private local.json (falls back to local.example.json)."""
 
     def __init__(self, folder="config"):
-        self.rules = json.load(open(f"{folder}/rules.json"))
+        self.public = json.load(open(f"{folder}/rules.json"))  # public rules only: safe to publish
+        self.rules = json.load(open(f"{folder}/rules.json"))   # public rules + private words below
         local = json.load(open(next(p for p in (f"{folder}/local.json", f"{folder}/local.example.json") if os.path.exists(p))))
         for label, words in self.rules["domain"]["lists"]:  # private words are added to the public lists
             words += local["extra_words"].get(label, [])
@@ -145,12 +146,28 @@ def assign_sessions(msgs, config):
         m.session_kept = sizes[m.session_no] >= config.rules["session"]["min_messages"]
 
 
+def write_definitions(rules, out="results/0_definitions.md"):
+    """results/0_definitions.md from the public rules.json: each section's _doc, then its word lists."""
+    text = lambda v: "; ".join(f"{k} = {text(x)}" for k, x in v.items()) if isinstance(v, dict) else (
+        ", ".join(map(str, v)) if isinstance(v, list) else str(v))
+    lines = ["# Definitions", "", "Generated from `config/rules.json` by `friction.py`. Do not edit by hand.",
+             "Patterns: `?` = the letter before is optional; `\\d+` = a number; `\\w*` = any word ending; `(a|b)` = a or b."]
+    for name, section in ((k, v) for k, v in rules.items() if not k.startswith("_")):
+        values = {k: text(v) for k, v in section.items() if k != "lists"}
+        lines += ["", f"## {name.replace('_', ' ').capitalize()}", section["_doc"].format(**values)]
+        lines += [f"- **{label}:** " + ", ".join(f"`{w}`" for w in words) for label, words in section.get("lists", [])]
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def run(out="data/messages.csv"):
     config = Config()
     msgs = Reader(config).read()
     for rule in (DomainRule, OutputTypeRule, ToneRule):
         msgs = rule(config).apply(msgs)
     assign_sessions(msgs, config)
+    write_definitions(config.public)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(asdict(msgs[0])))

@@ -40,6 +40,9 @@
       ["Satisfied", ["great", "good job", "nice", "thanks?", "thank you", "cool", "excellent", "very good", "much better", "looks better", "love"]]
     ]
   },
+  "reply": {
+    "_doc": "Prompt and reply: each prompt (an included message, or a paste, because the agent received that text) is paired with the user's next included message, if it comes within the session gap. The reply's tone group (Dissatisfied, Satisfied, or Neutral) shows how the agent's work on that prompt was received."
+  },
   "limits": {
     "_doc": "Word matching misses sarcasm and indirect complaints. Private word lists (names, organizations) are kept local and are not shown here."
   }

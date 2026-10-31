@@ -29,5 +29,8 @@ Both lists match: Mixed. One list matches: that tone. No match: Neutral. A dissa
 - **Dissatisfied:** `bad`, `wrong`, `unclear`, `broken`, `unprofessional`, `not (good|professional|clear)`, `not as good`, `not a good`, `way too`, `too (small|big|long|short|light|general|many)`, `disappear\w*`, `(didn'?t|did not) (see|change|show|update)`, `you (didn'?t|did not)`, `still (different|broken|not)`, `does not look`, `doesn'?t look`, `not the same`, `looks the same`, `don'?t like`, `do not like`, `what happened`, `hate`, `drives? nuts?`, `oh my god`, `piss\w*`, `already said`, `why (my|all|did|do you)`
 - **Satisfied:** `great`, `good job`, `nice`, `thanks?`, `thank you`, `cool`, `excellent`, `very good`, `much better`, `looks better`, `love`
 
+## Reply
+Prompt and reply: each prompt (an included message, or a paste, because the agent received that text) is paired with the user's next included message, if it comes within the session gap. The reply's tone group (Dissatisfied, Satisfied, or Neutral) shows how the agent's work on that prompt was received.
+
 ## Limits
 Word matching misses sarcasm and indirect complaints. Private word lists (names, organizations) are kept local and are not shown here.

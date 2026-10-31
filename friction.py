@@ -22,6 +22,7 @@ class Message:
     dissatisfied: bool = False  # tone is in rules.json tone.dissatisfied
     session_no: int = 0         # work-session number (see rules.json "session")
     session_kept: bool = False  # session has >= min_messages messages
+    reply_group: str = ""       # if this message is a prompt: tone group of the user's next message (see rules.json "reply")
 
 
 class Config:
@@ -146,6 +147,14 @@ def assign_sessions(msgs, config):
         m.session_kept = sizes[m.session_no] >= config.rules["session"]["min_messages"]
 
 
+def assign_replies(msgs, config):
+    """Pair each prompt (an included message or a paste) with the user's next included message within the gap."""
+    prompts = [m for m in msgs if m.step != 0 or m.matched == "paste"]  # pastes count: the agent received that text
+    for prompt, reply in zip(prompts, prompts[1:]):
+        if reply.step != 0 and reply.local_time - prompt.local_time <= config.gap:
+            prompt.reply_group = "Dissatisfied" if reply.dissatisfied else reply.tone
+
+
 def write_definitions(rules, out="results/0_definitions.md"):
     """results/0_definitions.md from the public rules.json: each section's _doc, then its word lists."""
     text = lambda v: "; ".join(f"{k} = {text(x)}" for k, x in v.items()) if isinstance(v, dict) else (
@@ -167,6 +176,7 @@ def run(out="data/messages.csv"):
     for rule in (DomainRule, OutputTypeRule, ToneRule):
         msgs = rule(config).apply(msgs)
     assign_sessions(msgs, config)
+    assign_replies(msgs, config)
     write_definitions(config.public)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", newline="") as f:

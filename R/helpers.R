@@ -67,3 +67,30 @@ plot_rates <- function(rates, file, x_label, highlight) {
   barplot(ordered$pct, names.arg = rownames(ordered), horiz = TRUE, las = 1, col = colors, xlab = x_label)
   invisible(dev.off())
 }
+
+# Write one results file: table, then Result (APA), Meaning (plain words), Limitation
+write_report <- function(file, title, table, result, meaning, limitation) {
+  writeLines(c(paste("#", title), "", table, "",
+               "## Result", result, "",
+               "## Meaning", meaning, "",
+               "## Limitation", limitation), file)
+}
+
+# Welch t-test of values between two groups, plus group stats and Cohen's d (group_a minus group_b)
+compare_two <- function(values, groups, group_a, group_b) {
+  stats <- describe_by_group(values, groups)[c(group_b, group_a), ]
+  test  <- t.test(values[groups == group_a], values[groups == group_b])
+  list(stats = stats, test = test, d = cohens_d(stats, group_a, group_b))
+}
+
+# APA sentence for a compare_two() result
+apa_ttest <- function(cmp, label_a, label_b, measure, unit = "") {
+  s <- cmp$stats
+  a <- rownames(s)[2]
+  b <- rownames(s)[1]
+  sprintf("%s had %s %s (*M* = %.1f%s, *SD* = %.1f) than %s (*M* = %.1f%s, *SD* = %.1f), %s, *t*(%.1f) = %.2f, *p* %s, *d* = %.2f.",
+          label_a, if (cmp$d > 0) "more" else "fewer", measure, s[a, "mean"], unit, s[a, "sd"],
+          label_b, s[b, "mean"], unit, s[b, "sd"],
+          if (cmp$test$p.value < 0.05) "and the difference was significant" else "but the difference was not significant",
+          cmp$test$parameter, abs(cmp$test$statistic), apa_p(cmp$test$p.value), cmp$d)
+}
